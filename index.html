@@ -1,129 +1,228 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>CANLI TV</title>
+<title>🌟 CANLI TV</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
+/* Genel body */
 body{
-margin:0;
-font-family:Arial;
-background:#0f172a;
-color:white;
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#0f172a;
+  color:white;
 }
+/* Header */
 header{
-background: linear-gradient(90deg,#0f172a,#111827);
-padding:20px;
-text-align:center;
-font-size:28px;
-font-weight:bold;
-letter-spacing:2px;
-box-shadow:0 4px 20px rgba(0,0,0,0.5);
-color:#f3f4f6;
+  background: linear-gradient(90deg,#0f172a,#111827);
+  padding:20px;
+  text-align:center;
+  font-size:28px;
+  font-weight:bold;
+  letter-spacing:2px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  color:#f3f4f6;
+  position:sticky;
+  top:0;
+  z-index:100;
 }
+
+/* Container */
 .container{
-display:flex;
-flex-wrap:wrap;
+  display:flex;
+  flex-wrap:wrap;
+  min-height:100vh;
 }
+
+/* Video player alanı */
 .player{
-flex:2;
-padding:20px;
+  flex:2;
+  padding:20px;
+  min-width:300px;
+  position:relative;
 }
 video{
-width:100%;
-border-radius:15px;
-box-shadow:0 10px 40px rgba(0,0,0,0.8);
+  width:100%;
+  border-radius:15px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.8);
 }
+
+/* Kanal overlay (logo + isim) */
+#overlay{
+  position:absolute;
+  top:15px;
+  left:15px;
+  background: rgba(0,0,0,0.5);
+  padding:5px 10px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:bold;
+  display:none;
+}
+#overlay img{
+  width:40px;
+  height:25px;
+  object-fit:contain;
+  border-radius:4px;
+}
+
+/* Kanal listesi */
 .channels{
-flex:1;
-background:#111827;
-height:100vh;
-overflow:auto;
-padding:15px;
-border-left:2px solid rgba(255,255,255,0.1);
+  flex:1;
+  background:#111827;
+  height:100vh;
+  overflow:auto;
+  padding:15px;
+  border-left:2px solid rgba(255,255,255,0.1);
+  min-width:200px;
 }
+
+/* Arama çubuğu */
 .search{
-width:100%;
-padding:10px;
-border:none;
-border-radius:8px;
-margin-bottom:10px;
-font-size:15px;
-outline:none;
-background:#1f1f1f;
-color:white;
-box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  margin-bottom:10px;
+  font-size:15px;
+  outline:none;
+  background:#1f1f1f url('https://cdn-icons-png.flaticon.com/512/622/622669.png') no-repeat 10px center;
+  padding-left:35px;
+  color:white;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
 }
+
+/* Kanal kutusu */
 .channel{
-display:flex;
-align-items:center;
-gap:10px;
-cursor:pointer;
-padding:12px;
-border-radius:10px;
-margin-bottom:8px;
-background:rgba(255,255,255,0.05);
-transition:0.3s;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:8px;
+  background:rgba(255,255,255,0.05);
+  transition:0.3s;
 }
 .channel:hover{
-background:linear-gradient(90deg,#374151,#1f2937);
-transform:scale(1.03);
+  background:linear-gradient(90deg,#374151,#1f2937);
+  transform:scale(1.03);
 }
 .channel img{
-width:50px;
-height:30px;
-object-fit:contain;
+  width:50px;
+  height:30px;
+  object-fit:contain;
+  border-radius:4px;
+}
+
+/* Favori iconu */
+.favorite{
+  margin-left:auto;
+  cursor:pointer;
+  font-size:18px;
+  color:#f59e0b;
+}
+
+/* Mobil uyumluluk */
+@media(max-width:768px){
+  .container { flex-direction:column; }
+  .channels { height:auto; border-left:none; border-top:2px solid rgba(255,255,255,0.1); }
 }
 </style>
 </head>
 <body>
 <header>🌟 CANLI TV</header>
 <div class="container">
-<div class="player">
-<video id="video" controls autoplay></video>
+  <div class="player">
+    <video id="video" controls autoplay></video>
+    <div id="overlay">
+      <img id="overlayLogo" src="">
+      <span id="overlayName"></span>
+    </div>
+  </div>
+  <div class="channels">
+    <input class="search" placeholder="Kanal ara..." onkeyup="search(this.value)">
+    <div id="channels"></div>
+  </div>
 </div>
-<div class="channels">
-<input class="search" placeholder="Kanal ara..." onkeyup="search(this.value)">
-<div id="channels"></div>
-</div>
-</div>
+
 <script>
 const M3U_URL="https://m3u.ch/pl/9147152ccd34d0beef4687960bdc5fb1_76068c9956f2687c48e06e79b7ba486e.m3u";
+let hls; // Tek HLS instance
+let favorites = JSON.parse(localStorage.getItem("favorites")||"[]");
+
 fetch(M3U_URL)
 .then(r=>r.text())
 .then(text=>{
-let lines=text.split("\n");
-let list=document.getElementById("channels");
-for(let i=0;i<lines.length;i++){
-if(lines[i].startsWith("#EXTINF")){
-let name=lines[i].split(",")[1];
-let logoMatch = lines[i].match(/tvg-logo="(.*?)"/);
-let logo = logoMatch ? logoMatch[1] : "";
-let url=lines[i+1];
-let div=document.createElement("div");
-div.className="channel";
-div.innerHTML = `${logo ? `<img src="${logo}">` : ""}<span>${name}</span>`;
-div.onclick=()=>play(url);
-list.appendChild(div);
-}
-}
+  let lines=text.split("\n");
+  let list=document.getElementById("channels");
+  for(let i=0;i<lines.length;i++){
+    if(lines[i].startsWith("#EXTINF")){
+      let name=lines[i].split(",")[1];
+      let logoMatch = lines[i].match(/tvg-logo="(.*?)"/);
+      let logo = logoMatch ? logoMatch[1] : "";
+      let url=lines[i+1];
+      
+      let div=document.createElement("div");
+      div.className="channel";
+      div.innerHTML = `
+        ${logo ? `<img src="${logo}">` : `<img src="https://via.placeholder.com/50x30?text=TV">`}
+        <span>${name}</span>
+        <span class="favorite">${favorites.includes(url)?"★":"☆"}</span>
+      `;
+      
+      // Kanal click
+      div.onclick=()=>play(url,name,logo);
+      
+      // Favori click
+      div.querySelector(".favorite").onclick=e=>{
+        e.stopPropagation();
+        toggleFavorite(url, div.querySelector(".favorite"));
+      }
+      
+      list.appendChild(div);
+    }
+  }
 });
+
+// Video oynatma
 var video=document.getElementById("video");
-function play(url){
-if(Hls.isSupported()){
-var hls=new Hls();
-hls.loadSource(url);
-hls.attachMedia(video);
-}else{
-video.src=url;
+var overlay=document.getElementById("overlay");
+function play(url,name,logo){
+  overlay.style.display="flex";
+  document.getElementById("overlayName").innerText=name;
+  document.getElementById("overlayLogo").src = logo || "https://via.placeholder.com/50x30?text=TV";
+  
+  if(Hls.isSupported()){
+    if(!hls) hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  } else {
+    video.src=url;
+  }
 }
-}
+
+// Arama
 function search(q){
-q=q.toLowerCase();
-document.querySelectorAll(".channel").forEach(c=>{
-let name=c.innerText.toLowerCase();
-c.style.display=name.includes(q)?"flex":"none";
-});
+  q=q.toLowerCase();
+  document.querySelectorAll(".channel").forEach(c=>{
+    let name=c.querySelector("span").innerText.toLowerCase();
+    c.style.display=name.includes(q)?"flex":"none";
+  });
+}
+
+// Favori toggle
+function toggleFavorite(url,el){
+  if(favorites.includes(url)){
+    favorites = favorites.filter(u=>u!==url);
+    el.innerText="☆";
+  } else {
+    favorites.push(url);
+    el.innerText="★";
+  }
+  localStorage.setItem("favorites",JSON.stringify(favorites));
 }
 </script>
 </body>
