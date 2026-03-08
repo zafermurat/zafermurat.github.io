@@ -5,14 +5,12 @@
 <title>🌟 CANLI TV</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-/* Genel body */
 body{
   margin:0;
   font-family:Arial,sans-serif;
   background:#0f172a;
   color:white;
 }
-/* Header */
 header{
   background: linear-gradient(90deg,#0f172a,#111827);
   padding:20px;
@@ -26,15 +24,11 @@ header{
   top:0;
   z-index:100;
 }
-
-/* Container */
 .container{
   display:flex;
   flex-wrap:wrap;
   min-height:100vh;
 }
-
-/* Video player alanı */
 .player{
   flex:2;
   padding:20px;
@@ -46,8 +40,6 @@ video{
   border-radius:15px;
   box-shadow:0 10px 40px rgba(0,0,0,0.8);
 }
-
-/* Kanal overlay (logo + isim) */
 #overlay{
   position:absolute;
   top:15px;
@@ -55,20 +47,9 @@ video{
   background: rgba(0,0,0,0.5);
   padding:5px 10px;
   border-radius:8px;
-  display:flex;
-  align-items:center;
-  gap:10px;
   font-weight:bold;
   display:none;
 }
-#overlay img{
-  width:40px;
-  height:25px;
-  object-fit:contain;
-  border-radius:4px;
-}
-
-/* Kanal listesi */
 .channels{
   flex:1;
   background:#111827;
@@ -78,8 +59,6 @@ video{
   border-left:2px solid rgba(255,255,255,0.1);
   min-width:200px;
 }
-
-/* Arama çubuğu */
 .search{
   width:100%;
   padding:10px;
@@ -93,39 +72,32 @@ video{
   color:white;
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
 }
-
-/* Kanal kutusu */
 .channel{
   display:flex;
   align-items:center;
-  gap:10px;
   cursor:pointer;
   padding:12px;
   border-radius:10px;
   margin-bottom:8px;
   background:rgba(255,255,255,0.05);
   transition:0.3s;
+  justify-content: space-between;
 }
 .channel:hover{
   background:linear-gradient(90deg,#374151,#1f2937);
   transform:scale(1.03);
 }
-.channel img{
-  width:50px;
-  height:30px;
-  object-fit:contain;
-  border-radius:4px;
-}
-
-/* Favori iconu */
 .favorite{
-  margin-left:auto;
   cursor:pointer;
   font-size:18px;
   color:#f59e0b;
 }
-
-/* Mobil uyumluluk */
+.category-title{
+  font-weight:bold;
+  font-size:16px;
+  margin:10px 0 5px 0;
+  color:#fbbf24;
+}
 @media(max-width:768px){
   .container { flex-direction:column; }
   .channels { height:auto; border-left:none; border-top:2px solid rgba(255,255,255,0.1); }
@@ -137,52 +109,59 @@ video{
 <div class="container">
   <div class="player">
     <video id="video" controls autoplay></video>
-    <div id="overlay">
-      <img id="overlayLogo" src="">
-      <span id="overlayName"></span>
-    </div>
+    <div id="overlay"></div>
   </div>
   <div class="channels">
     <input class="search" placeholder="Kanal ara..." onkeyup="search(this.value)">
+    <div id="favorites-container">
+      <div class="category-title">⭐ Favoriler</div>
+      <div id="favorites"></div>
+    </div>
+    <div class="category-title">Tüm Kanallar</div>
     <div id="channels"></div>
   </div>
 </div>
 
 <script>
 const M3U_URL="https://m3u.ch/pl/9147152ccd34d0beef4687960bdc5fb1_76068c9956f2687c48e06e79b7ba486e.m3u";
-let hls; // Tek HLS instance
+let hls;
 let favorites = JSON.parse(localStorage.getItem("favorites")||"[]");
 
+// Kanal oluşturma
+function renderChannel(name, url){
+  let div=document.createElement("div");
+  div.className="channel";
+  div.innerHTML = `
+    <span>${name}</span>
+    <span class="favorite">${favorites.includes(url)?"★":"☆"}</span>
+  `;
+  div.onclick=()=>play(url,name);
+  div.querySelector(".favorite").onclick=e=>{
+    e.stopPropagation();
+    toggleFavorite(url, div, name);
+  }
+  return div;
+}
+
+// M3U yükleme
 fetch(M3U_URL)
 .then(r=>r.text())
 .then(text=>{
   let lines=text.split("\n");
   let list=document.getElementById("channels");
+  let favList=document.getElementById("favorites");
   for(let i=0;i<lines.length;i++){
     if(lines[i].startsWith("#EXTINF")){
       let name=lines[i].split(",")[1];
-      let logoMatch = lines[i].match(/tvg-logo="(.*?)"/);
-      let logo = logoMatch ? logoMatch[1] : "";
       let url=lines[i+1];
       
-      let div=document.createElement("div");
-      div.className="channel";
-      div.innerHTML = `
-        ${logo ? `<img src="${logo}">` : `<img src="https://via.placeholder.com/50x30?text=TV">`}
-        <span>${name}</span>
-        <span class="favorite">${favorites.includes(url)?"★":"☆"}</span>
-      `;
+      let div = renderChannel(name,url);
       
-      // Kanal click
-      div.onclick=()=>play(url,name,logo);
-      
-      // Favori click
-      div.querySelector(".favorite").onclick=e=>{
-        e.stopPropagation();
-        toggleFavorite(url, div.querySelector(".favorite"));
+      if(favorites.includes(url)){
+        favList.appendChild(div);
+      } else {
+        list.appendChild(div);
       }
-      
-      list.appendChild(div);
     }
   }
 });
@@ -190,10 +169,9 @@ fetch(M3U_URL)
 // Video oynatma
 var video=document.getElementById("video");
 var overlay=document.getElementById("overlay");
-function play(url,name,logo){
-  overlay.style.display="flex";
-  document.getElementById("overlayName").innerText=name;
-  document.getElementById("overlayLogo").src = logo || "https://via.placeholder.com/50x30?text=TV";
+function play(url,name){
+  overlay.style.display="block";
+  overlay.innerText=name;
   
   if(Hls.isSupported()){
     if(!hls) hls = new Hls();
@@ -204,6 +182,23 @@ function play(url,name,logo){
   }
 }
 
+// Favori toggle
+function toggleFavorite(url, div, name){
+  let favList = document.getElementById("favorites");
+  let channelList = document.getElementById("channels");
+  
+  if(favorites.includes(url)){
+    favorites = favorites.filter(u=>u!==url);
+    div.querySelector(".favorite").innerText="☆";
+    channelList.appendChild(div);
+  } else {
+    favorites.push(url);
+    div.querySelector(".favorite").innerText="★";
+    favList.appendChild(div);
+  }
+  localStorage.setItem("favorites",JSON.stringify(favorites));
+}
+
 // Arama
 function search(q){
   q=q.toLowerCase();
@@ -211,18 +206,6 @@ function search(q){
     let name=c.querySelector("span").innerText.toLowerCase();
     c.style.display=name.includes(q)?"flex":"none";
   });
-}
-
-// Favori toggle
-function toggleFavorite(url,el){
-  if(favorites.includes(url)){
-    favorites = favorites.filter(u=>u!==url);
-    el.innerText="☆";
-  } else {
-    favorites.push(url);
-    el.innerText="★";
-  }
-  localStorage.setItem("favorites",JSON.stringify(favorites));
 }
 </script>
 </body>
