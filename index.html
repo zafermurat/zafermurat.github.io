@@ -2,24 +2,93 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Canlı Tv</title>
+<title>CANLI TV</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#0f172a;color:white;}
-header{background:#020617;padding:20px;text-align:center;font-size:26px;font-weight:bold;}
-.container{display:flex;flex-wrap:wrap;}
-.player{flex:2;padding:20px;}
-.channels{flex:1;background:#020617;height:100vh;overflow:auto;padding:15px;}
-video{width:100%;}
-.channel{cursor:pointer;padding:10px;border-bottom:1px solid #333;}
+
+body{
+margin:0;
+font-family:Arial;
+background:#0f172a;
+color:white;
+}
+
+header{
+background:linear-gradient(90deg,#2563eb,#06b6d4);
+padding:20px;
+text-align:center;
+font-size:28px;
+font-weight:bold;
+letter-spacing:2px;
+box-shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+
+.container{
+display:flex;
+flex-wrap:wrap;
+}
+
+.player{
+flex:2;
+padding:20px;
+}
+
+video{
+width:100%;
+border-radius:15px;
+box-shadow:0 10px 40px rgba(0,0,0,0.8);
+}
+
+.channels{
+flex:1;
+background:#020617;
+height:100vh;
+overflow:auto;
+padding:15px;
+border-left:2px solid rgba(255,255,255,0.1);
+}
+
+.search{
+width:100%;
+padding:10px;
+border:none;
+border-radius:8px;
+margin-bottom:10px;
+font-size:15px;
+outline:none;
+}
+
+.channel{
+display:flex;
+align-items:center;
+gap:10px;
+cursor:pointer;
+padding:12px;
+border-radius:10px;
+margin-bottom:8px;
+background:rgba(255,255,255,0.05);
+transition:0.3s;
+}
+
+.channel:hover{
+background:linear-gradient(90deg,#4facfe,#00f2fe);
+transform:scale(1.03);
+}
+
+.channel img{
+width:50px;
+height:30px;
+object-fit:contain;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<header>🌟 CANLI TV</header>
+<header>📺 ELITE TV</header>
 
 <div class="container">
 
@@ -27,7 +96,13 @@ video{width:100%;}
 <video id="video" controls autoplay></video>
 </div>
 
-<div class="channels" id="channels"></div>
+<div class="channels">
+
+<input class="search" placeholder="Kanal ara..." onkeyup="search(this.value)">
+
+<div id="channels"></div>
+
+</div>
 
 </div>
 
@@ -49,13 +124,19 @@ if(lines[i].startsWith("#EXTINF")){
 
 let name=lines[i].split(",")[1];
 
+let logoMatch = lines[i].match(/tvg-logo="(.*?)"/);
+let logo = logoMatch ? logoMatch[1] : "";
+
 let url=lines[i+1];
 
 let div=document.createElement("div");
 
 div.className="channel";
 
-div.innerText=name;
+div.innerHTML = `
+${logo ? `<img src="${logo}">` : ""}
+<span>${name}</span>
+`;
 
 div.onclick=()=>play(url);
 
@@ -84,6 +165,20 @@ hls.attachMedia(video);
 video.src=url;
 
 }
+
+}
+
+function search(q){
+
+q=q.toLowerCase();
+
+document.querySelectorAll(".channel").forEach(c=>{
+
+let name=c.innerText.toLowerCase();
+
+c.style.display=name.includes(q)?"flex":"none";
+
+});
 
 }
 
