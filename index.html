@@ -47,8 +47,17 @@ video{
   background: rgba(0,0,0,0.5);
   padding:5px 10px;
   border-radius:8px;
+  display:flex;
+  align-items:center;
+  gap:10px;
   font-weight:bold;
   display:none;
+}
+#overlay img{
+  width:40px;
+  height:25px;
+  object-fit:contain;
+  border-radius:4px;
 }
 .channels{
   flex:1;
@@ -75,28 +84,29 @@ video{
 .channel{
   display:flex;
   align-items:center;
+  gap:10px;
   cursor:pointer;
   padding:12px;
   border-radius:10px;
   margin-bottom:8px;
   background:rgba(255,255,255,0.05);
   transition:0.3s;
-  justify-content: space-between;
 }
 .channel:hover{
   background:linear-gradient(90deg,#374151,#1f2937);
   transform:scale(1.03);
 }
+.channel img{
+  width:50px;
+  height:30px;
+  object-fit:contain;
+  border-radius:4px;
+}
 .favorite{
+  margin-left:auto;
   cursor:pointer;
   font-size:18px;
   color:#f59e0b;
-}
-.category-title{
-  font-weight:bold;
-  font-size:16px;
-  margin:10px 0 5px 0;
-  color:#fbbf24;
 }
 @media(max-width:768px){
   .container { flex-direction:column; }
@@ -109,15 +119,13 @@ video{
 <div class="container">
   <div class="player">
     <video id="video" controls autoplay></video>
-    <div id="overlay"></div>
+    <div id="overlay">
+      <img id="overlayLogo" src="">
+      <span id="overlayName"></span>
+    </div>
   </div>
   <div class="channels">
     <input class="search" placeholder="Kanal ara..." onkeyup="search(this.value)">
-    <div id="favorites-container">
-      <div class="category-title">⭐ Favoriler</div>
-      <div id="favorites"></div>
-    </div>
-    <div class="category-title">Tüm Kanallar</div>
     <div id="channels"></div>
   </div>
 </div>
@@ -127,51 +135,72 @@ const M3U_URL="https://m3u.ch/pl/9147152ccd34d0beef4687960bdc5fb1_76068c9956f268
 let hls;
 let favorites = JSON.parse(localStorage.getItem("favorites")||"[]");
 
-// Kanal oluşturma
-function renderChannel(name, url){
-  let div=document.createElement("div");
+function createChannelDiv(name,url,logo){
+  let div = document.createElement("div");
   div.className="channel";
+  div.dataset.url = url;
   div.innerHTML = `
+    <img src="${logo || 'https://via.placeholder.com/50x30?text=TV'}">
     <span>${name}</span>
     <span class="favorite">${favorites.includes(url)?"★":"☆"}</span>
   `;
-  div.onclick=()=>play(url,name);
-  div.querySelector(".favorite").onclick=e=>{
+  div.onclick=()=>play(url,name,logo);
+  div.querySelector(".favorite").onclick = e=>{
     e.stopPropagation();
-    toggleFavorite(url, div, name);
+    toggleFavorite(url, div);
   }
   return div;
 }
 
-// M3U yükleme
+function toggleFavorite(url, div){
+  const favIcon = div.querySelector(".favorite");
+  if(favorites.includes(url)){
+    favorites = favorites.filter(u=>u!==url);
+    favIcon.innerText="☆";
+  } else {
+    favorites.push(url);
+    favIcon.innerText="★";
+  }
+  localStorage.setItem("favorites",JSON.stringify(favorites));
+  sortChannels();
+}
+
+function sortChannels(){
+  const list = document.getElementById("channels");
+  let channels = Array.from(list.children);
+  channels.sort((a,b)=>{
+    let aFav = favorites.includes(a.dataset.url);
+    let bFav = favorites.includes(b.dataset.url);
+    return (aFav===bFav)?0 : aFav? -1 : 1;
+  });
+  channels.forEach(c=>list.appendChild(c));
+}
+
 fetch(M3U_URL)
 .then(r=>r.text())
 .then(text=>{
   let lines=text.split("\n");
   let list=document.getElementById("channels");
-  let favList=document.getElementById("favorites");
   for(let i=0;i<lines.length;i++){
     if(lines[i].startsWith("#EXTINF")){
       let name=lines[i].split(",")[1];
+      let logoMatch = lines[i].match(/tvg-logo="(.*?)"/);
+      let logo = logoMatch ? logoMatch[1] : "";
       let url=lines[i+1];
-      
-      let div = renderChannel(name,url);
-      
-      if(favorites.includes(url)){
-        favList.appendChild(div);
-      } else {
-        list.appendChild(div);
-      }
+      let div = createChannelDiv(name,url,logo);
+      div.dataset.url=url;
+      list.appendChild(div);
     }
   }
+  sortChannels(); // Favoriler başa
 });
 
-// Video oynatma
 var video=document.getElementById("video");
 var overlay=document.getElementById("overlay");
-function play(url,name){
-  overlay.style.display="block";
-  overlay.innerText=name;
+function play(url,name,logo){
+  overlay.style.display="flex";
+  document.getElementById("overlayName").innerText=name;
+  document.getElementById("overlayLogo").src = logo || "https://via.placeholder.com/50x30?text=TV";
   
   if(Hls.isSupported()){
     if(!hls) hls = new Hls();
@@ -182,24 +211,6 @@ function play(url,name){
   }
 }
 
-// Favori toggle
-function toggleFavorite(url, div, name){
-  let favList = document.getElementById("favorites");
-  let channelList = document.getElementById("channels");
-  
-  if(favorites.includes(url)){
-    favorites = favorites.filter(u=>u!==url);
-    div.querySelector(".favorite").innerText="☆";
-    channelList.appendChild(div);
-  } else {
-    favorites.push(url);
-    div.querySelector(".favorite").innerText="★";
-    favList.appendChild(div);
-  }
-  localStorage.setItem("favorites",JSON.stringify(favorites));
-}
-
-// Arama
 function search(q){
   q=q.toLowerCase();
   document.querySelectorAll(".channel").forEach(c=>{
