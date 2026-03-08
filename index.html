@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Canlı Tv</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:white;}
+header{background:#020617;padding:20px;text-align:center;font-size:26px;font-weight:bold;}
+.container{display:flex;flex-wrap:wrap;}
+.player{flex:2;padding:20px;}
+.channels{flex:1;background:#020617;height:100vh;overflow:auto;padding:15px;}
+video{width:100%;}
+.channel{cursor:pointer;padding:10px;border-bottom:1px solid #333;}
+</style>
+
+</head>
+
+<body>
+
+<header>🌟 CANLI TV</header>
+
+<div class="container">
+
+<div class="player">
+<video id="video" controls autoplay></video>
+</div>
+
+<div class="channels" id="channels"></div>
+
+</div>
+
+<script>
+
+const M3U_URL="https://m3u.ch/pl/9147152ccd34d0beef4687960bdc5fb1_76068c9956f2687c48e06e79b7ba486e.m3u";
+
+fetch(M3U_URL)
+.then(r=>r.text())
+.then(text=>{
+
+let lines=text.split("\n");
+
+let list=document.getElementById("channels");
+
+for(let i=0;i<lines.length;i++){
+
+if(lines[i].startsWith("#EXTINF")){
+
+let name=lines[i].split(",")[1];
+
+let url=lines[i+1];
+
+let div=document.createElement("div");
+
+div.className="channel";
+
+div.innerText=name;
+
+div.onclick=()=>play(url);
+
+list.appendChild(div);
+
+}
+
+}
+
+});
+
+var video=document.getElementById("video");
+
+function play(url){
+
+if(Hls.isSupported()){
+
+var hls=new Hls();
+
+hls.loadSource(url);
+
+hls.attachMedia(video);
+
+}else{
+
+video.src=url;
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
