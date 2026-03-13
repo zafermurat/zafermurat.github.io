@@ -1,0 +1,14 @@
+{
+  "name": "turhan-tv-panel",
+  "version": "1.0.0",
+  "description": "Turhan TV Panel Tarayıcı Masaüstü Uygulaması",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "SeninAdın",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^26.2.0"
+  }
+}
