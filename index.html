@@ -583,9 +583,74 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 2px; }
 
+  /* ══ MOBİL ══ */
   @media (max-width: 768px) {
-    .app { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
+
+    header { padding: 11px 14px; }
+    .logo  { font-size: 20px; }
+    .logo-dot { width: 8px; height: 8px; }
+    .header-right { gap: 8px; }
+    #ch-counter { display: none; }
+
+    .search-bar { padding: 7px 10px; gap: 6px; }
+    .search-bar input { width: 110px; font-size: 12px; }
+
+    /* Sidebar alta, main üste */
+    .app {
+      grid-template-columns: 1fr;
+      height: auto;
+      min-height: 100vh;
+    }
+
+    .main    { order: 1; }
+    .sidebar { order: 2; border-right: none; border-top: 1px solid var(--border); }
+
+    /* Player 16:9 */
+    .player-ratio { padding-top: 56.25%; }
+    .idle-icon { font-size: 40px; }
+    .idle-txt  { font-size: 13px; letter-spacing: 2px; }
+
+    /* Controls 2 satır */
+    .ctrl-bar {
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      gap: 8px;
+    }
+
+    .np          { width: 100%; min-width: 0; }
+    .np-logo     { width: 30px; height: 30px; }
+    .np-title    { font-size: 12px; }
+    .np-group    { font-size: 10px; }
+
+    .ctrl-btns   { width: 100%; justify-content: space-between; gap: 5px; }
+    .cb          { flex: 1; height: 34px; font-size: 13px; }
+    .vol-wrap    { flex: 2; gap: 5px; }
+    .vol-sl      { width: 100%; }
+
+    /* Sidebar içi */
+    .sidebar-tabs  { padding: 0 12px; }
+    .tab-btn       { font-size: 10px; padding: 11px 4px; }
+    .cat-bar       { padding: 10px 12px; }
+    .ch-count      { padding: 6px 12px 2px; }
+    .channel-list  { max-height: 42vh; }
+
+    .channel  { padding: 8px 10px; gap: 10px; }
+    .ch-logo  { width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; }
+    .ch-name  { font-size: 12px; }
+    .ch-group { font-size: 10px; }
+
+    /* Info bar */
+    .info-bar { padding: 12px 14px; }
+    .rel-grid { grid-template-columns: repeat(auto-fill, minmax(80px,1fr)); gap: 8px; }
+    .rel-card { padding: 10px 6px; }
+    .rel-card .rc-name  { font-size: 10px; }
+    .rel-card .rc-group { font-size: 9px; }
+  }
+
+  /* 380px altı */
+  @media (max-width: 380px) {
+    .search-bar input { width: 80px; }
+    .vol-wrap { display: none; }
   }
 </style>
 </head>
