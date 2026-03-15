@@ -1,212 +1,456 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>🌟 CANLI TV</title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>\ud83c\udf1f CANLI TV</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#0f172a;
-  color:white;
-}
-header{
-  background: linear-gradient(90deg,#0f172a,#111827);
-  padding:20px;
-  text-align:center;
-  font-size:28px;
-  font-weight:bold;
-  letter-spacing:2px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.5);
-  color:#f3f4f6;
-  position:sticky;
-  top:0;
-  z-index:100;
-}
-.container{
-  display:flex;
-  flex-wrap:wrap;
-  min-height:100vh;
-}
-.player{
-  flex:2;
-  padding:20px;
-  min-width:300px;
-  position:relative;
-}
-video{
-  width:100%;
-  border-radius:15px;
-  box-shadow:0 10px 40px rgba(0,0,0,0.8);
-}
-#overlay{
-  position:absolute;
-  top:15px;
-  left:15px;
-  background: rgba(0,0,0,0.5);
-  padding:5px 10px;
-  border-radius:8px;
-  font-weight:bold;
-  display:none;
-}
-.channels{
-  flex:1;
-  background:#111827;
-  height:100vh;
-  overflow:auto;
-  padding:15px;
-  border-left:2px solid rgba(255,255,255,0.1);
-  min-width:200px;
-}
-.search{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  margin-bottom:10px;
-  font-size:15px;
-  outline:none;
-  background:#1f1f1f url('https://cdn-icons-png.flaticon.com/512/622/622669.png') no-repeat 10px center;
-  padding-left:35px;
-  color:white;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-}
-.channel{
-  display:flex;
-  align-items:center;
-  cursor:pointer;
-  padding:12px;
-  border-radius:10px;
-  margin-bottom:8px;
-  background:rgba(255,255,255,0.05);
-  transition:0.3s;
-  justify-content: space-between;
-}
-.channel:hover{
-  background:linear-gradient(90deg,#374151,#1f2937);
-  transform:scale(1.03);
-}
-.favorite{
-  cursor:pointer;
-  font-size:18px;
-  color:#f59e0b;
-}
-.category-title{
-  font-weight:bold;
-  font-size:16px;
-  margin:10px 0 5px 0;
-  color:#fbbf24;
-}
-@media(max-width:768px){
-  .container { flex-direction:column; }
-  .channels { height:auto; border-left:none; border-top:2px solid rgba(255,255,255,0.1); }
-}
+  :root {
+    --bg: #080b10;
+    --bg2: #0e1318;
+    --bg3: #141a22;
+    --border: rgba(255,255,255,0.06);
+    --accent: #e8373d;
+    --gold: #f5c842;
+    --text: #e8eaf0;
+    --muted: #5a6478;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Film grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* \u2500\u2500 LOADING \u2500\u2500 */
+  #loadingScreen {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 998; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 22px;
+  }
+  .spinner {
+    width: 52px; height: 52px;
+    border: 3px solid var(--bg3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .load-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 4px; color: var(--muted); }
+  .load-sub   { font-size: 12px; color: var(--muted); }
+
+  /* \u2500\u2500 HEADER \u2500\u2500 */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 28px;
+    background: rgba(8,11,16,0.96);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; letter-spacing: 3px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent); border-radius: 50%;
+    animation: pulseDot 1.5s infinite;
+  }
+  @keyframes pulseDot {
+    0%,100% { opacity:1; transform:scale(1); box-shadow:0 0 0 0 rgba(232,55,61,.4); }
+    50%      { opacity:.7; transform:scale(1.1); box-shadow:0 0 0 6px rgba(232,55,61,0); }
+  }
+
+  .search-bar {
+    display: flex; align-items: center;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; gap: 8px;
+    transition: border-color .2s;
+  }
+  .search-bar:focus-within { border-color: rgba(232,55,61,.4); }
+  .search-bar input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; width: 200px;
+  }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  /* \u2500\u2500 LAYOUT \u2500\u2500 */
+  .app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: calc(100vh - 61px);
+  }
+
+  /* \u2500\u2500 SIDEBAR \u2500\u2500 */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+  .sidebar-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; }
+  .tab-btn {
+    flex: 1; background: none; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; padding: 14px 8px;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  .cat-bar {
+    display: flex; gap: 6px;
+    padding: 12px 16px; overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .cat-bar::-webkit-scrollbar { display: none; }
+  .cat-pill {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 500;
+    padding: 5px 12px; border-radius: 20px;
+    cursor: pointer; white-space: nowrap; transition: all .2s;
+  }
+  .cat-pill.active, .cat-pill:hover {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+
+  .ch-count { padding: 8px 16px 4px; font-size: 11px; color: var(--muted); }
+
+  .channel-list { padding: 6px 8px; }
+
+  .ch-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; transition: all .2s;
+    border: 1px solid transparent; position: relative;
+  }
+  .ch-item:hover { background: var(--bg3); }
+  .ch-item.active {
+    background: rgba(232,55,61,.1);
+    border-color: rgba(232,55,61,.25);
+  }
+
+  .ch-logo {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0; overflow: hidden;
+  }
+  .ch-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; background: #0e1318; }
+
+  .ch-info { flex: 1; min-width: 0; }
+  .ch-name {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ch-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .live-badge {
+    background: var(--accent); color: #fff;
+    font-size: 9px; font-weight: 700; letter-spacing: .5px;
+    padding: 2px 5px; border-radius: 3px; flex-shrink: 0;
+  }
+  .ch-group {
+    font-size: 11px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .fav-btn {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 15px;
+    transition: color .2s, transform .2s;
+    flex-shrink: 0; padding: 4px;
+  }
+  .fav-btn:hover { color: var(--gold); transform: scale(1.2); }
+  .fav-btn.on { color: var(--gold); }
+
+  /* \u2500\u2500 MAIN \u2500\u2500 */
+  .main { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+
+  /* \u2500\u2500 PLAYER \u2500\u2500 */
+  .player-wrap { position: relative; background: #000; flex-shrink: 0; }
+  .player-ratio { position: relative; width: 100%; padding-top: 50%; background: #000; overflow: hidden; }
+
+  .player-idle {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, #0d1520 0%, #000 70%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+  }
+  .idle-icon {
+    font-size: 60px; opacity: .15;
+    animation: breathe 3s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { opacity:.1; transform:scale(1); }
+    50%      { opacity:.2; transform:scale(1.05); }
+  }
+  .idle-txt { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 4px; color: var(--muted); }
+
+  #videoEl { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; display: none; }
+
+  .err-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.85);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+  }
+  .err-overlay.show { display: flex; }
+  .err-msg { font-size: 13px; color: #ff6b6b; font-weight: 500; }
+  .err-sub { font-size: 11px; color: var(--muted); }
+
+  .fs-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .player-ratio:hover .fs-hint { opacity: 1; }
+  .fs-btn {
+    background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 8px; color: #fff; font-size: 12px; padding: 6px 14px;
+    backdrop-filter: blur(4px); pointer-events: all;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  }
+
+  /* \u2500\u2500 CONTROLS BAR \u2500\u2500 */
+  .ctrl-bar {
+    background: linear-gradient(to right, var(--bg2), var(--bg3));
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+
+  .np { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .np-logo {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--bg3); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .np-logo img { width: 100%; height: 100%; object-fit: contain; padding: 2px; background: #0e1318; }
+  .np-name {
+    font-size: 13px; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .on-air {
+    background: var(--accent); color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 3px;
+    animation: blink 2s infinite; flex-shrink: 0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .np-group { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .ctrl-btns { display: flex; align-items: center; gap: 8px; }
+  .cb {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all .2s;
+  }
+  .cb:hover { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateY(-1px); }
+  .cb.danger:hover { background: #c0392b; border-color: #c0392b; }
+
+  .vol-wrap { display: flex; align-items: center; gap: 8px; }
+  .vol-sl {
+    -webkit-appearance: none; appearance: none;
+    width: 80px; height: 4px; background: var(--bg3);
+    border-radius: 2px; outline: none; cursor: pointer;
+  }
+  .vol-sl::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--accent); border-radius: 50%; cursor: pointer;
+  }
+
+  /* \u2500\u2500 INFO BAR \u2500\u2500 */
+  .info-bar { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .info-bar::-webkit-scrollbar { width: 4px; }
+  .info-bar::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+  .sec-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 15px;
+    letter-spacing: 2px; color: var(--muted);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .rel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .rel-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 8px; cursor: pointer;
+    text-align: center; transition: all .2s;
+  }
+  .rel-card:hover { border-color: rgba(232,55,61,.3); background: var(--bg3); transform: translateY(-2px); }
+  .rel-card .r-icon { font-size: 26px; margin-bottom: 6px; }
+  .rel-card .r-icon img { width: 30px; height: 30px; object-fit: contain; }
+  .rel-card .r-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rel-card .r-group { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* \u2500\u2500 SLEEP MODAL \u2500\u2500 */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.8); backdrop-filter: blur(8px);
+    z-index: 200; display: none;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; width: 320px;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; margin-bottom: 20px; }
+  .timer-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .t-opt {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px; text-align: center;
+    cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text);
+    transition: all .2s;
+  }
+  .t-opt:hover, .t-opt.sel { background: rgba(232,55,61,.15); border-color: var(--accent); color: var(--accent); }
+  .t-cd { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--gold); padding: 6px 0; display: none; }
+  .modal-acts { display: flex; gap: 10px; }
+  .btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-p { background: var(--accent); color: #fff; } .btn-p:hover { background: #c0392b; }
+  .btn-s { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); } .btn-s:hover { color: var(--text); }
+
+  /* \u2500\u2500 TOAST \u2500\u2500 */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 18px;
+    font-size: 13px; font-weight: 500; z-index: 500;
+    transform: translateY(60px); opacity: 0;
+    transition: all .3s; max-width: 280px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
 </style>
 </head>
 <body>
-<header>🌟 CANLI TV</header>
-<div class="container">
-  <div class="player">
-    <video id="video" controls autoplay></video>
-    <div id="overlay"></div>
-  </div>
-  <div class="channels">
-    <input class="search" placeholder="Kanal ara..." onkeyup="search(this.value)">
-    <div id="favorites-container">
-      <div class="category-title">⭐ Favoriler</div>
-      <div id="favorites"></div>
-    </div>
-    <div class="category-title">Tüm Kanallar</div>
-    <div id="channels"></div>
-  </div>
+
+<!-- LOADING -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="load-title">KANALLAR Y\u00dcKLEN\u0130YOR</div>
+  <div class="load-sub" id="loadSub">M3U listesi al\u0131n\u0131yor...</div>
 </div>
 
-<script>
-const M3U_URL="https://m3u.ch/pl/9147152ccd34d0beef4687960bdc5fb1_76068c9956f2687c48e06e79b7ba486e.m3u";
-let hls;
-let favorites = JSON.parse(localStorage.getItem("favorites")||"[]");
+<!-- HEADER -->
+<header>
+  <div class="logo"><div class="logo-dot"></div>CANLI TV</div>
+  <div class="search-bar">
+    <span style="font-size:14px;color:var(--muted)">\ud83d\udd0d</span>
+    <input type="text" placeholder="Kanal ara..." id="searchInput" oninput="doFilter()">
+  </div>
+</header>
 
-// Kanal oluşturma
-function renderChannel(name, url){
-  let div=document.createElement("div");
-  div.className="channel";
-  div.innerHTML = `
-    <span>${name}</span>
-    <span class="favorite">${favorites.includes(url)?"★":"☆"}</span>
-  `;
-  div.onclick=()=>play(url,name);
-  div.querySelector(".favorite").onclick=e=>{
-    e.stopPropagation();
-    toggleFavorite(url, div, name);
-  }
-  return div;
-}
+<div class="app">
 
-// M3U yükleme
-fetch(M3U_URL)
-.then(r=>r.text())
-.then(text=>{
-  let lines=text.split("\n");
-  let list=document.getElementById("channels");
-  let favList=document.getElementById("favorites");
-  for(let i=0;i<lines.length;i++){
-    if(lines[i].startsWith("#EXTINF")){
-      let name=lines[i].split(",")[1];
-      let url=lines[i+1];
-      
-      let div = renderChannel(name,url);
-      
-      if(favorites.includes(url)){
-        favList.appendChild(div);
-      } else {
-        list.appendChild(div);
-      }
-    }
-  }
-});
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" onclick="switchTab('all',this)">T\u00dcM KANALLAR</button>
+      <button class="tab-btn" onclick="switchTab('fav',this)">\u2b50 FAVOR\u0130LER</button>
+    </div>
+    <div class="cat-bar" id="catBar"></div>
+    <div class="ch-count" id="chCount"></div>
+    <div class="channel-list" id="channelList"></div>
+  </aside>
 
-// Video oynatma
-var video=document.getElementById("video");
-var overlay=document.getElementById("overlay");
-function play(url,name){
-  overlay.style.display="block";
-  overlay.innerText=name;
-  
-  if(Hls.isSupported()){
-    if(!hls) hls = new Hls();
-    hls.loadSource(url);
-    hls.attachMedia(video);
-  } else {
-    video.src=url;
-  }
-}
+  <!-- MAIN -->
+  <main class="main">
 
-// Favori toggle
-function toggleFavorite(url, div, name){
-  let favList = document.getElementById("favorites");
-  let channelList = document.getElementById("channels");
-  
-  if(favorites.includes(url)){
-    favorites = favorites.filter(u=>u!==url);
-    div.querySelector(".favorite").innerText="☆";
-    channelList.appendChild(div);
-  } else {
-    favorites.push(url);
-    div.querySelector(".favorite").innerText="★";
-    favList.appendChild(div);
-  }
-  localStorage.setItem("favorites",JSON.stringify(favorites));
-}
+    <!-- PLAYER -->
+    <div class="player-wrap">
+      <div class="player-ratio" id="playerRatio">
+        <div class="player-idle" id="playerIdle">
+          <div class="idle-icon">\ud83d\udcfa</div>
+          <div class="idle-txt">\u0130ZLEMEK \u0130\u00c7\u0130N KANAL SE\u00c7\u0130N</div>
+        </div>
+        <video id="videoEl" controls playsinline></video>
+        <div class="err-overlay" id="errOverlay">
+          <div class="err-msg">\u26a0\ufe0f Yay\u0131n a\u00e7\u0131lamad\u0131</div>
+          <div class="err-sub">Bu kanal \u015fu an yay\u0131nda olmayabilir</div>
+        </div>
+        <div class="fs-hint">
+          <button class="fs-btn" onclick="openFS()">\u26f6 TAM EKRAN</button>
+        </div>
+      </div>
 
-// Arama
-function search(q){
-  q=q.toLowerCase();
-  document.querySelectorAll(".channel").forEach(c=>{
-    let name=c.querySelector("span").innerText.toLowerCase();
-    c.style.display=name.includes(q)?"flex":"none";
-  });
-}
-</script>
-</body>
-</html>
+      <!-- CONTROLS -->
+      <div class="ctrl-bar">
+        <div class="np">
+          <div class="np-logo" id="npLogo"><span style="font-size:18px">\ud83d\udcfa</span></div>
+          <div style="min-width:0">
+            <div class="np-name" id="npName">Kanal Se\u00e7ilmedi</div>
+            <div class="np-group" id="npGroup">Bir kanal se\u00e7in</div>
+          </div>
+        </div>
+        <div class="ctrl-btns">
+          <div class="vol-wrap">
+            <span style="font-size:14px">\ud83d\udd0a</span>
+            <input type="range" class="vol-sl" min="0" max="100" value="90" id="volSl" oninput="setVol(this.value)">
+          </div>
+          <button class="cb" onclick="prevCh()" title="\u00d6nceki (\u2190)">\u23ee</button>
+          <button class="cb" onclick="nextCh()" title="Sonraki (\u2192)">\u23ed</button>
+          <button class="cb" onclick="favToggleCurrent()" id="favCurBtn" title="Favoriye ekle">\u2606</button>
+          <button class="cb" onclick="openSleep()" title="Uyku zamanlay\u0131c\u0131">\u23f1</button>
+          <button class="cb danger" onclick="stopPlayer()" title="Durdur (Esc)">\u23f9</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO -->
+    <div class="info-bar">
+      <div class="sec-title">\u00d6NER\u0130LEN KANALLAR</div>
+      <div class="rel-grid" id="relGrid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- SLEEP MODAL -->
+<div class="modal-overlay" id="sleepModal">
+  <div class="modal">
+    <div class="modal-title">\u23f1 UYKU ZAMANLAYICISI</div>
+    <div class="timer-opts">
+      <div class="t-opt" onclick="pickTimer(15,this)">15 dk</div>
+      <div class="t-opt sel" onclick="pickTimer(30,this)">30 dk</div>
+      <div class="t-opt" onclick="pickTimer(60,this)">1 saat</div>
+      <div class="t-opt" onclick="pick
